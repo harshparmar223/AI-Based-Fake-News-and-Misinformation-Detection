@@ -1,0 +1,62 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+*.so
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Environment variables ────────────────────────────────────────────────────
+.env
+*.env.local
+
+# ── Jupyter Notebooks ────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ── ML / Data ────────────────────────────────────────────────────────────────
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+models/*.pkl
+models/*.pt
+models/*.h5
+models/*.bin
+models/*.onnx
+
+# ── Logs & caches ────────────────────────────────────────────────────────────
+logs/
+*.log
+.cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-workspace
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.swp
+
