@@ -20,6 +20,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase
 
 
+def _utcnow():
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
 class Base(DeclarativeBase):
     """Shared declarative base for all ORM models."""
 
@@ -30,7 +34,7 @@ class AnalysisRecord(Base):
     __tablename__ = "analysis_records"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
 
     # Input
     source_url = Column(String(2048), nullable=True)
@@ -62,7 +66,7 @@ class FeedbackRecord(Base):
     __tablename__ = "feedback_records"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
     analysis_id = Column(Integer, nullable=False)   # FK → AnalysisRecord.id
     correct_label = Column(String(10), nullable=False)
     comment = Column(Text, nullable=True)

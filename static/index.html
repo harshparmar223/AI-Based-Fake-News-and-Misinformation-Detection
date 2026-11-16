@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TruthLens AI — Fake News & Misinformation Detection Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .dark .glass-nav {
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+    }
+    .hero-glow {
+      background: radial-gradient(circle at 50% 30%, rgba(20, 184, 166, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+    }
+    .dark .hero-glow {
+      background: radial-gradient(circle at 50% 30%, rgba(20, 184, 166, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
+    }
+    .chip-fake {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    .chip-real {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+    .dark .chip-fake {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .dark .chip-real {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+    .hl-fake {
+      background-color: rgba(239, 68, 68, 0.25);
+      border-bottom: 2px solid #ef4444;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .hl-real {
+      background-color: rgba(34, 197, 94, 0.25);
+      border-bottom: 2px solid #22c55e;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    /* Spinner */
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid #ffffff;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- TOP NAVIGATION BAR -->
+  <nav class="glass-nav sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+            <i class="fa-solid fa-shield-halved text-xl"></i>
+          </div>
+          <div>
+            <span class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">TruthLens<span class="text-teal-600 dark:text-teal-400">AI</span></span>
+            <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">v1.0 Academic Defense</span>
+          </div>
+        </div>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center space-x-1 lg:space-x-3">
+          <button onclick="scrollToSection('hero')" class="nav-btn px-3 py-2 text-sm font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition">Overview</button>
+          <button onclick="scrollToSection('analyzer')" class="nav-btn px-3 py-2 text-sm font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition">Live Analyzer</button>
+          <button onclick="scrollToSection('url-checker')" class="nav-btn px-3 py-2 text-sm font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition">URL Verifier</button>
+          <button onclick="scrollToSection('dashboard')" class="nav-btn px-3 py-2 text-sm font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition">Audit Dashboard</button>
+          <button onclick="scrollToSection('defense')" class="nav-btn px-3 py-2 text-sm font-semibold rounded-lg hover:text-teal-600 dark:hover:text-teal-400 transition text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-graduation-cap mr-1"></i>Faculty Review</button>
+        </div>
+
+        <!-- Right actions -->
+        <div class="flex items-center gap-3">
+          <a href="/docs" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-teal-500 transition shadow-sm">
+            <i class="fa-solid fa-code text-teal-600"></i> REST API Docs
+          </a>
+          <!-- Dark mode toggle -->
+          <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i id="theme-icon" class="fa-solid fa-moon"></i>
+          </button>
+          <button onclick="scrollToSection('analyzer')" class="px-4 py-2 text-sm font-bold rounded-lg bg-teal-600 hover:bg-teal-500 text-white shadow-md shadow-teal-600/20 transition">
+            Test Article <i class="fa-solid fa-arrow-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section id="hero" class="relative hero-glow pt-16 pb-20 overflow-hidden border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 text-xs font-bold mb-6">
+        <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+        Calibrated Multi-Model Ensemble • 93.71% Test Accuracy
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight">
+        Detect Misinformation with <span class="bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">Explainable Intelligence</span>
+      </h1>
+      <p class="mt-5 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        TruthLens evaluates news text in real time using Calibrated Support Vector Machines, Random Forests, LIME feature attributions, and external fact-checking databases.
+      </p>
+
+      <!-- Stats Bar -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-12">
+        <div class="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+          <div class="text-3xl font-extrabold text-teal-600 dark:text-teal-400">93.71%</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">SVM Accuracy</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+          <div class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">0.9856</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Ensemble ROC-AUC</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+          <div class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">6,042</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Benchmark Articles</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+          <div class="text-3xl font-extrabold text-amber-500">&lt; 15 ms</div>
+          <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">Inference Latency</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE ARTICLE ANALYZER -->
+  <section id="analyzer" class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-10">
+      <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Live News Article Analyzer</h2>
+      <p class="text-slate-600 dark:text-slate-400 mt-2">
+        Paste any article content below or choose one of our verified academic presentation samples.
+      </p>
+    </div>
+
+    <!-- 1-Click Demo Buttons -->
+    <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+      <span class="text-xs font-bold uppercase text-slate-400 tracking-wider">Demo Presets:</span>
+      <button onclick="loadSample(1)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 transition shadow-sm">
+        🛸 Denver Airport Conspiracy (Fake)
+      </button>
+      <button onclick="loadSample(2)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 transition shadow-sm">
+        🍋 Lemon Water Cancer Cure (Fake)
+      </button>
+      <button onclick="loadSample(3)" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition shadow-sm">
+        🇪🇺 European Central Bank Accord (Real)
+      </button>
+    </div>
+
+    <!-- Main Input Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden p-6 sm:p-8">
+      <div class="grid grid-cols-1 gap-6">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Article Body Text</label>
+            <span id="char-counter" class="text-xs font-mono text-slate-400">0 words • 0 chars</span>
+          </div>
+          <textarea id="article-input" rows="7" placeholder="Paste full news story or statement here to evaluate…"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/80 p-4 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none font-sans leading-relaxed transition"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Source Domain / URL (Optional)</label>
+            <input type="text" id="source-domain-input" placeholder="e.g. reuters.com, bbc.com, worldnewsdailyreport.com"
+              class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/80 px-4 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div class="sm:col-span-1 pt-4 sm:pt-0">
+            <button id="analyze-btn" onclick="runAnalysis()"
+              class="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold text-sm shadow-lg shadow-teal-600/30 flex items-center justify-center gap-2 transition transform active:scale-95">
+              <span id="btn-text"><i class="fa-solid fa-bolt"></i> Run Full Pipeline</span>
+              <span id="btn-spinner" class="spinner hidden"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS CONTAINER (HIDDEN UNTIL ANALYZED) -->
+      <div id="results-panel" class="hidden mt-10 pt-8 border-t border-slate-200 dark:border-slate-700 space-y-8 animate-fade-in">
+        
+        <!-- Primary Verdict Banner -->
+        <div id="verdict-banner" class="rounded-2xl p-6 text-center border-2 shadow-lg transition">
+          <div id="verdict-tag" class="text-2xl sm:text-3xl font-extrabold tracking-tight"></div>
+          <div id="verdict-subtext" class="text-sm font-medium mt-2"></div>
+        </div>
+
+        <!-- 3-Column Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Confidence Gauge -->
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 text-center">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Ensemble Confidence</div>
+            <div class="flex items-center justify-center">
+              <div class="relative w-32 h-32 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="8" class="text-slate-200 dark:text-slate-800" fill="transparent"/>
+                  <circle id="confidence-circle" cx="50" cy="50" r="40" stroke="currentColor" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="25.1" class="text-teal-500 transition-all duration-1000" stroke-linecap="round" fill="transparent"/>
+                </svg>
+                <div class="absolute text-2xl font-black text-slate-900 dark:text-white" id="confidence-val">--%</div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 mt-2">Weighted Soft Voting Consensus</div>
+          </div>
+
+          <!-- Uncertainty Assessment -->
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Risk & Uncertainty</span>
+              <span id="unc-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold"></span>
+            </div>
+            <div class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed" id="unc-guidance"></div>
+            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 space-y-1" id="unc-reasons"></div>
+          </div>
+
+          <!-- Multi-Model Voting -->
+          <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Model Votes (Prob. Fake)</div>
+            <div class="space-y-3" id="model-votes-container"></div>
+          </div>
+        </div>
+
+        <!-- LIME Explainable AI Section -->
+        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-500"></i> Explainable AI: Influential Words (LIME)
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Token attribution identifies which specific words shifted the model towards Real or Fake.</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-red-500 inline-block"></span> Pushes Fake</span>
+              <span class="flex items-center gap-1.5 ml-2"><span class="w-3 h-3 rounded bg-green-500 inline-block"></span> Pushes Real</span>
+            </div>
+          </div>
+
+          <!-- Token chips -->
+          <div id="lime-chips" class="flex flex-wrap gap-2 mb-6"></div>
+
+          <!-- Text Heatmap View -->
+          <div class="mb-6">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Interactive In-Context Token Heatmap</div>
+            <div id="text-heatmap" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm leading-relaxed max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <!-- Chart.js LIME Bar Chart -->
+          <div class="h-64">
+            <canvas id="limeChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Verification Layer (Domain Credibility & Fact Check) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Domain Scorecard -->
+          <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-globe text-teal-600"></i> Source Credibility Assessment
+            </h4>
+            <div id="domain-info-block" class="space-y-2 text-sm"></div>
+          </div>
+
+          <!-- External Fact-Check Search -->
+          <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass-check text-indigo-500"></i> Fact-Check Database Corroboration
+            </h4>
+            <div id="fact-check-block" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center">
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Was this prediction accurate?</h4>
+          <p class="text-xs text-slate-500 mb-4">Your feedback helps retrain and calibrate our continuous learning models.</p>
+          <div class="flex items-center justify-center gap-4">
+            <button onclick="submitFeedback('correct')" class="px-5 py-2 rounded-xl text-xs font-bold border border-emerald-300 dark:border-emerald-700/80 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition shadow-sm">
+              <i class="fa-solid fa-thumbs-up mr-1.5"></i> Accurate Prediction
+            </button>
+            <button onclick="toggleCorrectionModal()" class="px-5 py-2 rounded-xl text-xs font-bold border border-rose-300 dark:border-rose-700/80 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition shadow-sm">
+              <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Report Misclassification
+            </button>
+          </div>
+
+          <!-- Correction Form Drawer -->
+          <div id="correction-drawer" class="hidden mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 max-w-lg mx-auto text-left">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Submit Model Correction</div>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold mb-1">True Classification Label</label>
+                <select id="corr-label" class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2">
+                  <option value="REAL">REAL (Reliable News)</option>
+                  <option value="FAKE">FAKE (Misinformation / Fabricated)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1">Comment / Rationale</label>
+                <input type="text" id="corr-comment" placeholder="Explain why the model misjudged this article…" class="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2">
+              </div>
+              <button onclick="submitFeedback('wrong')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition">
+                Submit to Retraining Queue
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- URL & SOURCE VERIFICATION -->
+  <section id="url-checker" class="py-16 bg-slate-100/60 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">URL & Source Reputation Verifier</h2>
+        <p class="text-slate-600 dark:text-slate-400 mt-2">
+          Inspect any news website link to audit publisher trust scores, TLD structure, and automatically parse content.
+        </p>
+      </div>
+
+      <!-- Test URL pills -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
+        <span class="text-xs font-bold uppercase text-slate-400">Quick Test URLs:</span>
+        <button onclick="testUrl('https://www.reuters.com/business/finance/central-banks-digital-settlement')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-teal-500">Reuters (High Credibility)</button>
+        <button onclick="testUrl('https://theonion.com/study-finds-majority-of-time-spent-at-desk')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-teal-500">The Onion (Satire)</button>
+        <button onclick="testUrl('https://worldnewsdailyreport.com/lemon-baking-soda-miracle')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-teal-500">World News Daily (Low)</button>
+      </div>
+
+      <div class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-md">
+        <div class="flex gap-3">
+          <input type="text" id="url-verify-input" placeholder="https://www.reuters.com/..." class="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+          <button onclick="runUrlVerification()" class="px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md transition flex items-center gap-2">
+            <span id="url-btn-text">Audit URL</span>
+            <span id="url-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <!-- URL Verification Output -->
+        <div id="url-results-box" class="hidden mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYTICS & AUDIT DASHBOARD -->
+  <section id="dashboard" class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Live Platform Analytics</h2>
+        <p class="text-slate-600 dark:text-slate-400 mt-1">Real-time telemetry, classification distributions, and persistent audit logs.</p>
+      </div>
+      <button onclick="loadDashboardData()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 hover:border-teal-500 flex items-center gap-2 transition">
+        <i class="fa-solid fa-rotate-right"></i> Refresh Data
+      </button>
+    </div>
+
+    <!-- Analytics KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Analyses</div>
+        <div class="text-3xl font-black text-slate-900 dark:text-white mt-1" id="dash-total">--</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-rose-500">Flagged Misinformation</div>
+        <div class="text-3xl font-black text-rose-600 dark:text-rose-400 mt-1" id="dash-fake">--</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-500">Verified Reliable</div>
+        <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1" id="dash-real">--</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-indigo-500">Avg Confidence</div>
+        <div class="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1" id="dash-conf">--</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">Class Distribution (Real vs Fake)</h4>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">Confidence Breakdown</h4>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historical Table -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Recent Analysis Audit Log</h4>
+        <input type="text" id="table-search" oninput="filterTable()" placeholder="Search headlines or sources…" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-900 text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 font-bold">
+            <tr>
+              <th class="py-3 px-4">ID</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Headline / Claim</th>
+              <th class="py-3 px-4">Verdict</th>
+              <th class="py-3 px-4">Confidence</th>
+              <th class="py-3 px-4">Source</th>
+              <th class="py-3 px-4">Fact Status</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACADEMIC PROJECT DEFENSE (FOR FACULTY / TEACHER) -->
+  <section id="defense" class="py-16 bg-slate-900 text-white border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Faculty Evaluation Suite</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mt-3">Academic Project Defense & Benchmarks</h2>
+        <p class="text-slate-400 mt-2 text-sm leading-relaxed">
+          Rigorous experimental validation across three machine learning paradigms evaluated on identical held-out test splits.
+        </p>
+      </div>
+
+      <!-- Comparative Model Table -->
+      <div class="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl mb-12">
+        <div class="p-6 border-b border-slate-700">
+          <h3 class="text-lg font-bold">Model Performance Benchmarks (Held-out Test Partition, N = 1,209)</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-xs tracking-wider border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-6">Model Architecture</th>
+                <th class="py-3 px-6">Accuracy</th>
+                <th class="py-3 px-6">Precision</th>
+                <th class="py-3 px-6">Recall</th>
+                <th class="py-3 px-6">F1-Score</th>
+                <th class="py-3 px-6">ROC-AUC</th>
+                <th class="py-3 px-6">Inference Latency</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700">
+              <tr class="bg-indigo-950/30 font-semibold text-teal-300">
+                <td class="py-4 px-6 flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-400"></i> Calibrated Linear SVM (Platt)</td>
+                <td class="py-4 px-6 font-bold text-white">93.71%</td>
+                <td class="py-4 px-6">93.37%</td>
+                <td class="py-4 px-6">94.28%</td>
+                <td class="py-4 px-6 font-bold text-white">93.82%</td>
+                <td class="py-4 px-6 font-bold text-emerald-400">0.9856</td>
+                <td class="py-4 px-6 font-mono text-xs">&lt; 1 ms</td>
+              </tr>
+              <tr class="text-slate-300">
+                <td class="py-4 px-6">Logistic Regression (L2)</td>
+                <td class="py-4 px-6 font-semibold text-white">92.64%</td>
+                <td class="py-4 px-6">91.18%</td>
+                <td class="py-4 px-6 font-bold text-teal-300">94.61%</td>
+                <td class="py-4 px-6">92.86%</td>
+                <td class="py-4 px-6">0.9802</td>
+                <td class="py-4 px-6 font-mono text-xs">&lt; 1 ms</td>
+              </tr>
+              <tr class="text-slate-300">
+                <td class="py-4 px-6">Random Forest Classifier (100 Trees)</td>
+                <td class="py-4 px-6 font-semibold text-white">89.33%</td>
+                <td class="py-4 px-6">87.56%</td>
+                <td class="py-4 px-6">91.99%</td>
+                <td class="py-4 px-6">89.72%</td>
+                <td class="py-4 px-6">0.9570</td>
+                <td class="py-4 px-6 font-mono text-xs">12 ms</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Confusion Matrices Row -->
+      <div class="mb-12">
+        <h3 class="text-lg font-bold mb-4">Empirical Confusion Matrices (Test Partition)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-5 rounded-2xl bg-slate-800 border border-slate-700">
+            <div class="text-xs font-bold uppercase text-teal-400 mb-3">Linear SVM (Calibrated)</div>
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">556</div>
+                <div class="text-slate-400 text-[10px]">True Real</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">41</div>
+                <div class="text-slate-400 text-[10px]">False Fake</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">35</div>
+                <div class="text-slate-400 text-[10px]">False Real</div>
+              </div>
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">577</div>
+                <div class="text-slate-400 text-[10px]">True Fake</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-800 border border-slate-700">
+            <div class="text-xs font-bold uppercase text-indigo-400 mb-3">Logistic Regression</div>
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">541</div>
+                <div class="text-slate-400 text-[10px]">True Real</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">56</div>
+                <div class="text-slate-400 text-[10px]">False Fake</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">33</div>
+                <div class="text-slate-400 text-[10px]">False Real</div>
+              </div>
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">579</div>
+                <div class="text-slate-400 text-[10px]">True Fake</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-slate-800 border border-slate-700">
+            <div class="text-xs font-bold uppercase text-purple-400 mb-3">Random Forest (100 Trees)</div>
+            <div class="grid grid-cols-2 gap-2 text-center text-xs">
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">517</div>
+                <div class="text-slate-400 text-[10px]">True Real</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">80</div>
+                <div class="text-slate-400 text-[10px]">False Fake</div>
+              </div>
+              <div class="p-3 bg-rose-950/60 border border-rose-500/40 rounded-xl">
+                <div class="text-lg font-bold text-rose-300">49</div>
+                <div class="text-slate-400 text-[10px]">False Real</div>
+              </div>
+              <div class="p-3 bg-emerald-950/60 border border-emerald-500/40 rounded-xl">
+                <div class="text-lg font-bold text-emerald-300">563</div>
+                <div class="text-slate-400 text-[10px]">True Fake</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Defense Q&A -->
+      <div>
+        <h3 class="text-lg font-bold mb-4">Technical Defense FAQ for Faculty Review</h3>
+        <div class="space-y-4 text-sm">
+          <div class="p-5 rounded-xl bg-slate-800/80 border border-slate-700">
+            <div class="font-bold text-teal-400 mb-1">Q1: Why did Linear Support Vector Machines outperform Random Forests?</div>
+            <p class="text-slate-300 leading-relaxed text-xs">
+              In high-dimensional sparse vector spaces (10,000 TF-IDF features), document representations are largely linearly separable across hyperplane boundaries. Linear SVM finds the maximum margin hyperplane without greedily splitting axes like axis-aligned decision trees. We applied 3-fold Platt calibration (<code class="text-teal-300">CalibratedClassifierCV</code>) to generate well-calibrated class probabilities for confidence estimation and LIME.
+            </p>
+          </div>
+          <div class="p-5 rounded-xl bg-slate-800/80 border border-slate-700">
+            <div class="font-bold text-teal-400 mb-1">Q2: How does LIME feature attribution work under the hood?</div>
+            <p class="text-slate-300 leading-relaxed text-xs">
+              LIME (Local Interpretable Model-agnostic Explanations) draws perturbed samples by randomly masking individual words from the target article, runs these variations through the multi-model ensemble's <code class="text-teal-300">predict_proba</code> function, weights them by exponential cosine distance to the original document, and fits an interpretable ridge regression surrogate model whose coefficients represent the exact signed contribution of each token.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-950 text-slate-400 py-12 border-t border-slate-800 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <div class="flex items-center gap-2 text-white font-bold text-base mb-2">
+            <i class="fa-solid fa-shield-halved text-teal-500"></i> TruthLens AI
+          </div>
+          <p class="leading-relaxed">An end-to-end Machine Learning and Explainable NLP platform for automated news reliability assessment.</p>
+        </div>
+        <div>
+          <div class="font-bold text-white mb-2 uppercase tracking-wider text-[11px]">System Architecture</div>
+          <ul class="space-y-1">
+            <li>• Scikit-Learn 1.9 & Python 3.13</li>
+            <li>• FastAPI High-Throughput REST Engine</li>
+            <li>• LIME Local Surrogate Model</li>
+            <li>• SQLite + SQLAlchemy ORM</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-bold text-white mb-2 uppercase tracking-wider text-[11px]">Documentation</div>
+          <ul class="space-y-1">
+            <li><a href="/docs" target="_blank" class="hover:text-teal-400 transition">• Interactive Swagger API (/docs)</a></li>
+            <li><a href="#defense" class="hover:text-teal-400 transition">• Model Benchmark Report</a></li>
+            <li><a href="#analyzer" class="hover:text-teal-400 transition">• Live Explainability Demo</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-bold text-white mb-2 uppercase tracking-wider text-[11px]">Academic Advisory</div>
+          <p class="leading-relaxed">Automated assessments are probabilistic aids and should not be used as the sole determinant of factual truth. Important news claims should be corroborated with established wire services.</p>
+        </div>
+      </div>
+      <div class="pt-8 border-t border-slate-800 text-center text-slate-500">
+        &copy; 2026 TruthLens AI Research Team. Built for Academic Presentation & Demonstration.
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // Theme Management
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcon(isDark);
+    }
+    function updateThemeIcon(isDark) {
+      const icon = document.getElementById('theme-icon');
+      if (icon) {
+        icon.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-slate-600';
+      }
+    }
+    // Initialize Theme
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      updateThemeIcon(true);
+    } else {
+      updateThemeIcon(false);
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Input Counters
+    const articleInput = document.getElementById('article-input');
+    const charCounter = document.getElementById('char-counter');
+    if (articleInput && charCounter) {
+      articleInput.addEventListener('input', () => {
+        const text = articleInput.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        charCounter.textContent = `${words} words • ${articleInput.value.length} chars`;
+      });
+    }
+
+    // Preset Samples
+    const samples = {
+      1: {
+        text: "BREAKING: Secret government bunker discovered under Denver International Airport containing alien technology, mind-control transmitters, and classified military bioweapons. Whistleblowers confirm subterranean tunnels connect directly to the Pentagon, operating without congressional oversight to manipulate atmospheric weather patterns and trigger coastal storms.",
+        domain: "empirenews.net"
+      },
+      2: {
+        text: "Doctors stunned after discovering drinking boiled lemon water mixed with hot baking soda completely eradicates all forms of cancer in 48 hours. Major pharmaceutical conglomerates and federal health agencies have conspired to suppress this ancient natural miracle cure to protect multi-billion dollar chemotherapy revenues.",
+        domain: "worldnewsdailyreport.com"
+      },
+      3: {
+        text: "European finance ministers reached a consensus on new fiscal regulations late Wednesday, establishing stricter debt reduction targets for member nations while permitting flexibility for green infrastructure investments. The agreement concluded months of rigorous negotiations between northern and southern member states ahead of the upcoming European Parliament elections.",
+        domain: "reuters.com"
+      }
+    };
+
+    function loadSample(num) {
+      const s = samples[num];
+      if (s) {
+        articleInput.value = s.text;
+        document.getElementById('source-domain-input').value = s.domain;
+        const words = s.text.trim().split(/\s+/).length;
+        charCounter.textContent = `${words} words • ${s.text.length} chars`;
+        scrollToSection('analyzer');
+      }
+    }
+
+    let activeAnalysisId = null;
+    let limeChartInstance = null;
+
+    // RUN ANALYSIS API
+    async function runAnalysis() {
+      const text = articleInput.value.trim();
+      const sourceUrl = document.getElementById('source-domain-input').value.trim();
+      if (!text) {
+        alert("Please enter or load article text first.");
+        return;
+      }
+
+      const btn = document.getElementById('analyze-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+
+      btnText.classList.add('hidden');
+      btnSpinner.classList.remove('hidden');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, source_url: sourceUrl || null })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Analysis request failed.');
+        }
+
+        const data = await res.json();
+        renderAnalysisResults(data, text);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btnText.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+        btn.disabled = false;
+      }
+    }
+
+    // Render Analysis Output
+    function renderAnalysisResults(data, rawText) {
+      activeAnalysisId = data.id;
+      const panel = document.getElementById('results-panel');
+      panel.classList.remove('hidden');
+
+      // 1. Verdict Banner
+      const banner = document.getElementById('verdict-banner');
+      const tag = document.getElementById('verdict-tag');
+      const sub = document.getElementById('verdict-subtext');
+
+      if (data.label === 'FAKE') {
+        banner.className = 'rounded-2xl p-6 text-center border-2 shadow-lg transition bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-200 shadow-rose-500/10';
+        tag.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-2 text-rose-500"></i> POTENTIALLY MISLEADING / FAKE NEWS';
+        sub.innerHTML = `Model Confidence: <b>${(data.confidence * 100).toFixed(1)}%</b> • Probability of Misinformation: <b>${(data.fake_probability * 100).toFixed(1)}%</b>`;
+      } else {
+        banner.className = 'rounded-2xl p-6 text-center border-2 shadow-lg transition bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-200 shadow-emerald-500/10';
+        tag.innerHTML = '<i class="fa-solid fa-circle-check mr-2 text-emerald-500"></i> LIKELY RELIABLE / REAL NEWS';
+        sub.innerHTML = `Model Confidence: <b>${(data.confidence * 100).toFixed(1)}%</b> • Probability of Veracity: <b>${((1 - data.fake_probability) * 100).toFixed(1)}%</b>`;
+      }
+
+      // 2. Confidence Circle
+      document.getElementById('confidence-val').textContent = `${(data.confidence * 100).toFixed(0)}%`;
+      const circle = document.getElementById('confidence-circle');
+      const offset = 251.2 - (251.2 * data.confidence);
+      circle.style.strokeDashoffset = offset;
+      circle.className = data.label === 'FAKE' ? 'text-rose-500 transition-all duration-1000' : 'text-emerald-500 transition-all duration-1000';
+
+      // 3. Uncertainty Assessment
+      const uncBadge = document.getElementById('unc-badge');
+      const uncLevel = data.uncertainty.level;
+      uncBadge.textContent = `${uncLevel} RISK (${data.uncertainty.score.toFixed(2)})`;
+      if (uncLevel === 'LOW') {
+        uncBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300';
+      } else if (uncLevel === 'MODERATE') {
+        uncBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300';
+      } else {
+        uncBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-300';
+      }
+      document.getElementById('unc-guidance').textContent = data.uncertainty.recommendation;
+      const uncReasonsBox = document.getElementById('unc-reasons');
+      uncReasonsBox.innerHTML = data.uncertainty.reasons.map(r => `<div>• ${r}</div>`).join('');
+
+      // 4. Model Votes
+      const votesContainer = document.getElementById('model-votes-container');
+      const scores = data.model_scores || {};
+      votesContainer.innerHTML = Object.entries(scores).map(([model, prob]) => {
+        const prettyName = model.replace('_model', '').toUpperCase();
+        const pVal = (prob * 100).toFixed(1);
+        const barColor = prob > 0.5 ? 'bg-rose-500' : 'bg-emerald-500';
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span>${prettyName}</span>
+              <span>${pVal}%</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+              <div class="h-full ${barColor} rounded-full" style="width: ${pVal}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 5. LIME Chips & Chart
+      const chipsBox = document.getElementById('lime-chips');
+      const attributions = data.lime_attributions || [];
+      chipsBox.innerHTML = attributions.map(item => {
+        const chipClass = item.influence === 'FAKE' ? 'chip-fake' : 'chip-real';
+        const sign = item.weight > 0 ? '+' : '';
+        return `<span class="px-2.5 py-1 rounded-lg text-xs font-bold ${chipClass}">${item.word} (${sign}${item.weight.toFixed(3)})</span>`;
+      }).join('');
+
+      // Token In-Context Heatmap
+      const heatmapBox = document.getElementById('text-heatmap');
+      let annotated = rawText;
+      attributions.forEach(item => {
+        const cls = item.influence === 'FAKE' ? 'hl-fake' : 'hl-real';
+        const regex = new RegExp(`\\b(${item.word})\\b`, 'gi');
+        annotated = annotated.replace(regex, `<span class="${cls}">$1</span>`);
+      });
+      heatmapBox.innerHTML = annotated;
+
+      // LIME Chart
+      renderLimeChart(attributions);
+
+      // 6. Source Credibility Box
+      const domainBox = document.getElementById('domain-info-block');
+      if (data.source_credibility) {
+        const sc = data.source_credibility;
+        domainBox.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 dark:text-slate-200">${sc.domain}</span>
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200">${sc.category} (${(sc.score * 100).toFixed(0)}/100)</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed mt-1">${sc.rationale}</p>
+        `;
+      } else {
+        domainBox.innerHTML = `<span class="text-xs text-slate-400">No domain specified. Classification performed purely on linguistic semantics.</span>`;
+      }
+
+      // 7. Fact-Check Box
+      const factBox = document.getElementById('fact-check-block');
+      if (data.fact_check && data.fact_check.claims && data.fact_check.claims.length > 0) {
+        const v = data.fact_check.verdict;
+        const colorCls = v === 'VERIFIED_FALSE' ? 'text-rose-500' : 'text-emerald-500';
+        let factHtml = `<div class="font-bold ${colorCls} text-xs mb-2">Verdict: ${v}</div>`;
+        data.fact_check.claims.forEach(c => {
+          factHtml += `
+            <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+              <div class="font-semibold text-slate-700 dark:text-slate-300">"${c.text}"</div>
+              <div class="text-[11px] text-slate-500 mt-1">Rating: <b class="text-rose-500">${c.rating}</b> by ${c.source}</div>
+              ${c.url ? `<a href="${c.url}" target="_blank" class="text-teal-600 hover:underline text-[11px] mt-1 inline-block">Read Fact Check <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>` : ''}
+            </div>
+          `;
+        });
+        factBox.innerHTML = factHtml;
+      } else {
+        factBox.innerHTML = `<span class="text-xs text-slate-400">No matching debunked claims found in fact-checking records. A lack of record does not ensure authenticity.</span>`;
+      }
+
+      panel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // LIME Feature Chart
+    function renderLimeChart(attributions) {
+      const ctx = document.getElementById('limeChart').getContext('2d');
+      if (limeChartInstance) limeChartInstance.destroy();
+
+      const labels = attributions.map(a => a.word);
+      const data = attributions.map(a => a.weight);
+      const colors = attributions.map(a => a.influence === 'FAKE' ? '#ef4444' : '#22c55e');
+
+      limeChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'LIME Feature Weight',
+            data: data,
+            backgroundColor: colors,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `Weight: ${ctx.parsed.x > 0 ? '+' : ''}${ctx.parsed.x.toFixed(4)} (${ctx.parsed.x > 0 ? 'Pushes FAKE' : 'Pushes REAL'})`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(150, 150, 150, 0.1)' },
+              title: { display: true, text: 'Feature Influence (Positive = Fake, Negative = Real)', font: { size: 11 } }
+            },
+            y: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // FEEDBACK
+    function toggleCorrectionModal() {
+      const drawer = document.getElementById('correction-drawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    async function submitFeedback(status) {
+      if (!activeAnalysisId) return;
+      const corrLabel = status === 'wrong' ? document.getElementById('corr-label').value : null;
+      const comment = status === 'wrong' ? document.getElementById('corr-comment').value : null;
+
+      try {
+        await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            analysis_id: activeAnalysisId,
+            feedback: status,
+            correct_label: corrLabel,
+            comment: comment
+          })
+        });
+        alert(status === 'correct' ? 'Thank you! Confirmed as accurate.' : 'Correction recorded to retraining queue!');
+        document.getElementById('correction-drawer').classList.add('hidden');
+      } catch (e) {
+        alert('Feedback error: ' + e.message);
+      }
+    }
+
+    // URL VERIFICATION
+    function testUrl(u) {
+      document.getElementById('url-verify-input').value = u;
+      runUrlVerification();
+    }
+
+    async function runUrlVerification() {
+      const u = document.getElementById('url-verify-input').value.trim();
+      if (!u) return alert('Enter a URL.');
+
+      const textEl = document.getElementById('url-btn-text');
+      const spinEl = document.getElementById('url-spinner');
+      textEl.classList.add('hidden');
+      spinEl.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/verify-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: u })
+        });
+        const d = await res.json();
+        renderUrlResult(d);
+      } catch (err) {
+        alert('URL verification error: ' + err.message);
+      } finally {
+        textEl.classList.remove('hidden');
+        spinEl.classList.add('hidden');
+      }
+    }
+
+    function renderUrlResult(d) {
+      const box = document.getElementById('url-results-box');
+      box.classList.remove('hidden');
+
+      let predHtml = '';
+      if (d.analysis) {
+        const badge = d.analysis.label === 'FAKE' ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        predHtml = `
+          <div class="mt-4 p-4 rounded-xl border ${badge}">
+            <div class="text-xs uppercase font-bold">Content Prediction from Scraped Body:</div>
+            <div class="text-lg font-black mt-1">${d.analysis.label} (${(d.analysis.confidence * 100).toFixed(1)}% Confidence)</div>
+          </div>
+        `;
+      }
+
+      box.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-lg font-bold text-slate-800 dark:text-white">${d.credibility.domain}</span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200">
+            ${d.credibility.category} (${(d.credibility.score * 100).toFixed(0)}/100)
+          </span>
+        </div>
+        <p class="text-xs text-slate-500">${d.credibility.rationale}</p>
+        ${d.article.success ? `
+          <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl text-xs space-y-1">
+            <div class="font-bold text-slate-700 dark:text-slate-300">Parsed Headline: ${d.article.title || 'Untitled'}</div>
+            <div class="text-slate-400">Scraped ${d.article.char_count} characters</div>
+          </div>
+        ` : `<div class="text-xs text-amber-500">Notice: Full article body protected by firewall/paywall. Evaluated purely on domain trust.</div>`}
+        ${predHtml}
+      `;
+    }
+
+    // DASHBOARD DATA LOADER
+    let pieChart = null;
+    let barChart = null;
+    let cachedAuditRecords = [];
+
+    async function loadDashboardData() {
+      try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+
+        document.getElementById('dash-total').textContent = data.stats.total_analyses;
+        document.getElementById('dash-fake').textContent = `${data.stats.fake_count} (${(data.stats.fake_rate * 100).toFixed(0)}%)`;
+        document.getElementById('dash-real').textContent = `${data.stats.real_count} (${(data.stats.real_rate * 100).toFixed(0)}%)`;
+        document.getElementById('dash-conf').textContent = `${(data.stats.average_confidence * 100).toFixed(1)}%`;
+
+        renderPieChart(data.stats.fake_count, data.stats.real_count);
+        renderConfidenceBarChart(data.recent_records);
+
+        cachedAuditRecords = data.recent_records || [];
+        renderTable(cachedAuditRecords);
+      } catch (e) {
+        console.error('Error loading dashboard:', e);
+      }
+    }
+
+    function renderPieChart(fake, real) {
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Fake / Misleading', 'Reliable / Real'],
+          datasets: [{
+            data: [fake, real],
+            backgroundColor: ['#ef4444', '#22c55e'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
+    function renderConfidenceBarChart(records) {
+      const ctx = document.getElementById('barChart').getContext('2d');
+      if (barChart) barChart.destroy();
+
+      const bins = { '50-65%': 0, '65-80%': 0, '80-90%': 0, '90-100%': 0 };
+      records.forEach(r => {
+        const c = r.confidence;
+        if (c < 0.65) bins['50-65%']++;
+        else if (c < 0.80) bins['65-80%']++;
+        else if (c < 0.90) bins['80-90%']++;
+        else bins['90-100%']++;
+      });
+
+      barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(bins),
+          datasets: [{
+            label: 'Article Count',
+            data: Object.values(bins),
+            backgroundColor: '#3b82f6',
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(150, 150, 150, 0.1)' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderTable(records) {
+      const tbody = document.getElementById('audit-table-body');
+      tbody.innerHTML = records.map(r => {
+        const isFake = r.label === 'FAKE';
+        const badge = isFake ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+            <td class="py-3 px-4 font-mono text-slate-400">#${r.id}</td>
+            <td class="py-3 px-4 text-slate-500 whitespace-nowrap">${r.created_at}</td>
+            <td class="py-3 px-4 text-slate-800 dark:text-slate-200 max-w-xs truncate">${r.headline}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badge}">${r.label}</span></td>
+            <td class="py-3 px-4 font-mono font-bold">${(r.confidence * 100).toFixed(1)}%</td>
+            <td class="py-3 px-4 text-slate-400 max-w-[120px] truncate">${r.source}</td>
+            <td class="py-3 px-4 text-slate-500">${r.fact_verdict}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterTable() {
+      const q = document.getElementById('table-search').value.toLowerCase();
+      const filtered = cachedAuditRecords.filter(r => r.headline.toLowerCase().includes(q) || r.source.toLowerCase().includes(q));
+      renderTable(filtered);
+    }
+
+    // Load initial data
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDashboardData();
+    });
+  </script>
+</body>
+</html>

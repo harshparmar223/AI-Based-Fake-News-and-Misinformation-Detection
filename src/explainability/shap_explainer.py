@@ -62,9 +62,13 @@ class SHAPExplainer:
         if self._explainer is None:
             raise RuntimeError("Call build() before explain().")
         shap_values = self._explainer.shap_values(features)
+        if hasattr(shap_values, "values"):
+            shap_values = shap_values.values
         # For binary classifiers, shap_values may be a list [class0, class1]
         if isinstance(shap_values, list):
             return shap_values[1]
+        if hasattr(shap_values, "ndim") and shap_values.ndim == 3:
+            return shap_values[:, :, 1]
         return shap_values
 
     def top_features(

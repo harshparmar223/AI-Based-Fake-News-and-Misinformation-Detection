@@ -21,7 +21,7 @@ class _HTMLStripper(HTMLParser):
 
     @property
     def text(self) -> str:
-        return " ".join(self._chunks)
+        return re.sub(r"\s+", " ", " ".join(self._chunks)).strip()
 
 
 def strip_html(text: str) -> str:

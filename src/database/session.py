@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Generator
 
 from sqlalchemy import create_engine
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from src.database.models import Base
 
+Path("data").mkdir(exist_ok=True)
 _DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/fake_news.db")
 
 engine = create_engine(
@@ -23,7 +25,7 @@ engine = create_engine(
     echo=False,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 
 def init_db() -> None:

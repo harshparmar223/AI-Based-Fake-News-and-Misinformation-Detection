@@ -15,9 +15,21 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
-# Download required NLTK assets on first import (silent if already present)
-for _pkg in ("punkt", "stopwords", "wordnet", "omw-1.4"):
-    nltk.download(_pkg, quiet=True)
+# Ensure required NLTK assets are available without attempting failed network calls in sandbox
+for _pkg, _sub in (
+    ("punkt", "tokenizers/punkt"),
+    ("punkt_tab", "tokenizers/punkt_tab"),
+    ("stopwords", "corpora/stopwords"),
+    ("wordnet", "corpora/wordnet"),
+    ("omw-1.4", "corpora/omw-1.4"),
+):
+    try:
+        nltk.data.find(_sub)
+    except (LookupError, ValueError):
+        try:
+            nltk.download(_pkg, quiet=True)
+        except Exception:
+            pass
 
 
 @lru_cache(maxsize=1)

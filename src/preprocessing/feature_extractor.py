@@ -13,6 +13,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MaxAbsScaler
 
 from src.preprocessing.tokenizer import preprocess_tokens
 
@@ -67,7 +68,7 @@ class TFIDFFeatureExtractor:
     Parameters
     ----------
     max_features:
-        Vocabulary size cap (default 50 000).
+        Vocabulary size cap (default 10 000).
     ngram_range:
         N-gram range (default ``(1, 2)``).
     add_linguistic:
@@ -76,23 +77,31 @@ class TFIDFFeatureExtractor:
 
     def __init__(
         self,
-        max_features: int = 50_000,
+        max_features: int = 10_000,
         ngram_range: tuple[int, int] = (1, 2),
         add_linguistic: bool = True,
     ) -> None:
         self.max_features = max_features
         self.ngram_range = ngram_range
         self.add_linguistic = add_linguistic
+        self._ling_scaler = MaxAbsScaler() if add_linguistic else None
         self._vectorizer = TfidfVectorizer(
             max_features=max_features,
             ngram_range=ngram_range,
             tokenizer=preprocess_tokens,
             token_pattern=None,
+            sublinear_tf=True,
         )
         self._fitted = False
 
     def fit(self, texts: List[str]) -> "TFIDFFeatureExtractor":
         self._vectorizer.fit(texts)
+        if self.add_linguistic and self._ling_scaler is not None:
+            ling = np.array(
+                [list(vars(extract_linguistic_features(t)).values()) for t in texts],
+                dtype=float,
+            )
+            self._ling_scaler.fit(ling)
         self._fitted = True
         return self
 
@@ -100,15 +109,34 @@ class TFIDFFeatureExtractor:
         if not self._fitted:
             raise RuntimeError("Call fit() before transform().")
         tfidf_matrix = self._vectorizer.transform(texts).toarray()
-        if self.add_linguistic:
-            ling_features = np.array(
+        if self.add_linguistic and self._ling_scaler is not None:
+            ling = np.array(
                 [list(vars(extract_linguistic_features(t)).values()) for t in texts],
                 dtype=float,
             )
-            return np.hstack([tfidf_matrix, ling_features])
+            scaled_ling = self._ling_scaler.transform(ling)
+            return np.hstack([tfidf_matrix, scaled_ling])
         return tfidf_matrix
 
     def fit_transform(self, texts: List[str]) -> np.ndarray:
         self.fit(texts)
         return self.transform(texts)
+
+    def get_feature_names_out(self) -> List[str]:
+        """Return list of all feature names (TF-IDF tokens + linguistic features)."""
+        if not self._fitted:
+            raise RuntimeError("Call fit() before get_feature_names_out().")
+        names = list(self._vectorizer.get_feature_names_out())
+        if self.add_linguistic:
+            names.extend([
+                "char_count",
+                "word_count",
+                "sentence_count",
+                "avg_word_length",
+                "exclamation_count",
+                "question_count",
+                "capital_ratio",
+                "unique_word_ratio",
+            ])
+        return names
 
